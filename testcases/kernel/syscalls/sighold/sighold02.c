@@ -61,6 +61,7 @@
 # define NUMSIGS NSIG
 #endif
 
+#define CODECOMMENT 0
 char *TCID = "sighold02";
 int TST_TOTAL = 2;
 
@@ -102,6 +103,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
+#if CODECOMMENT
 		if ((pid = FORK_OR_VFORK()) < 0) {
 			tst_brkm(TBROK | TERRNO, NULL, "fork() failed");
 		} else if (pid > 0) {
@@ -126,6 +128,8 @@ int main(int ac, char **av)
 			do_child();
 #endif
 		}
+#endif
+	do_child();
 	}
 
 	cleanup();
@@ -165,8 +169,18 @@ void do_child(void)
 				 sig, tst_strsig(sig));
 		}
 	}
+#if CODECOMMENT
 
 	TST_SAFE_CHECKPOINT_WAKE_AND_WAIT(NULL, 0);
+
+#endif
+
+	// raise the signal
+	for (sig = 1; sig < NUMSIGS; sig++) {
+		if (skip_sig(sig))
+			continue;
+		SAFE_KILL(NULL, pid, sig);
+	}
 
 	if (!sigs_catched) {
 		tst_resm(TPASS, "All signals were hold");
@@ -188,6 +202,8 @@ void do_child(void)
 static void setup(void)
 {
 	tst_sig(FORK, DEF_HANDLER, NULL);
+
+	pid = getpid();
 
 	tst_tmpdir();
 
