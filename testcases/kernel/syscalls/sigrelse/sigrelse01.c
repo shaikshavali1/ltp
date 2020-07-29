@@ -421,6 +421,12 @@ int choose_sig(int sig)
 
 	}
 
+	// signals between SIGRTMIN and SIGRTMAX
+	// reserved for userspace.
+	// Hence, skip these signals.
+	if(sig >= SIGRTMIN && sig <= SIGRTMAX)
+		return 0;
+
 	return 1;
 
 }
