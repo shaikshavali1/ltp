@@ -49,6 +49,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
 #include <sys/types.h>
@@ -71,9 +72,13 @@ int out_fd;
 pid_t child_pid;
 static int sockfd, s;
 static struct sockaddr_in sin1;	/* shared between do_child and create_server */
+pthread_t tid;
 
 void cleanup(void);
+#if 0
 void do_child(void);
+#endif
+void* do_child(void* parm);
 void setup(void);
 int create_server(void);
 
@@ -93,8 +98,10 @@ PROT_READ | PROT_WRITE, PASS_UNMAPPED_BUFFER},};
 
 int TST_TOTAL = sizeof(testcases) / sizeof(testcases[0]);
 
+#if 0
 #ifdef UCLINUX
 static char *argv0;
+#endif
 #endif
 
 void do_sendfile(int prot, int pass_unmapped_buffer)
@@ -139,8 +146,15 @@ void do_sendfile(int prot, int pass_unmapped_buffer)
 
 	shutdown(sockfd, SHUT_RDWR);
 	shutdown(s, SHUT_RDWR);
+#if 0
 	kill(child_pid, SIGKILL);
+#endif
+
+	sleep(1);
+	pthread_join(tid, NULL);
 	close(in_fd);
+	close(sockfd);
+	close(s);
 
 	if (!pass_unmapped_buffer) {
 		/* Not unmapped yet. So do it now. */
@@ -151,7 +165,10 @@ void do_sendfile(int prot, int pass_unmapped_buffer)
 /*
  * do_child
  */
+#if 0
 void do_child(void)
+#endif
+void* do_child(void* parm)
 {
 	int lc;
 	socklen_t length;
@@ -162,7 +179,10 @@ void do_child(void)
 		recvfrom(sockfd, rbuf, 4096, 0, (struct sockaddr *)&sin1,
 			 &length);
 	}
+#if 0
 	exit(0);
+#endif
+	pthread_exit(0);
 }
 
 /*
@@ -227,6 +247,7 @@ int create_server(void)
 	}
 	SAFE_GETSOCKNAME(cleanup, sockfd, (struct sockaddr *)&sin1, &slen);
 
+#if 0
 	child_pid = FORK_OR_VFORK();
 	if (child_pid < 0) {
 		tst_brkm(TBROK, cleanup, "client/server fork failed: %s",
@@ -243,6 +264,11 @@ int create_server(void)
 #else
 		do_child();
 #endif
+	}
+#endif
+
+	if (pthread_create(&tid, NULL, do_child, NULL) != 0) {
+		tst_brkm(TBROK, cleanup, "failed to create child thread");
 	}
 
 	s = socket(PF_INET, SOCK_DGRAM, 0);
@@ -263,9 +289,11 @@ int main(int ac, char **av)
 	int lc;
 
 	tst_parse_opts(ac, av, NULL, NULL);
+#if 0
 #ifdef UCLINUX
 	argv0 = av[0];
 	maybe_run_child(&do_child, "");
+#endif
 #endif
 
 	setup();

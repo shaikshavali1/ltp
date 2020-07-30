@@ -17,7 +17,10 @@
 #
 
 top_srcdir		?= ../../../..
-
+#sendfile04: CFLAGS+=-pthread
+#sendfile04_64: CFLAGS+=-pthread
+#sendfile04: LDLIBS+=-lpthread
+#sendfile04_64: LDLIBS+=-lpthread
 include $(top_srcdir)/include/mk/testcases.mk
 include $(abs_srcdir)/../utils/newer_64.mk
 
