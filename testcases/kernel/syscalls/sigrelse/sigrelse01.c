@@ -116,11 +116,6 @@ extern int sighold(int __sig);
 extern int sigrelse(int __sig);
 #endif
 
-// Needed for musl pthread implementation
-#define SIGCANCEL 32
-#define SIGTIMER 33
-#define SIGSYNCCALL 34
-
 void setup(void);
 void cleanup(void);
 static void verify_sigrelse(void);
@@ -151,8 +146,9 @@ static int sig_caught;		/* flag TRUE if signal caught */
 #define NUMSIGS NSIG
 #endif
 
+#define NUMTSTSIGS 32
 /* array of counters for signals caught by handler() */
-static int sig_array[NUMSIGS];
+static int sig_array[NUMTSTSIGS];
 
 void hold_signals(void)
 {
@@ -166,7 +162,7 @@ void hold_signals(void)
         } else {
                 /* all set up to catch signals, now hold them */
 
-                for (sig = 1; sig < NUMSIGS; sig++) {
+                for (sig = 1; sig < NUMTSTSIGS; sig++) {
                         if (choose_sig(sig)) {
                                 if ((rv = sighold(sig)) != 0) {
                                         /* THEY say sighold ALWAYS returns 0 */
@@ -183,7 +179,7 @@ void release_signals(void)
 {
 	int sig;		/* current signal number */
 	int rv;			/* function return value */
-	for (sig = 1; sig < NUMSIGS; sig++) {
+	for (sig = 1; sig < NUMTSTSIGS; sig++) {
         	if (choose_sig(sig)) {
 			/* all set up, release and catch a signal */
 
@@ -250,7 +246,7 @@ static void verify_sigrelse(void)
 	 * send signals to child and see if it holds them
 	 */
 
-	for (sig = 1; sig < NUMSIGS; sig++) {
+	for (sig = 1; sig < NUMTSTSIGS; sig++) {
 		if (choose_sig(sig)) {
 			if (kill(pid, sig) < 0) {
 				if (errno == ESRCH) {
@@ -274,7 +270,7 @@ static void verify_sigrelse(void)
 	release_signals();
 
 	caught_sigs = 0;
-	for (sig = 1; sig < NUMSIGS; sig++) {
+	for (sig = 1; sig < NUMTSTSIGS; sig++) {
 		if (choose_sig(sig)) {
 			if (sig_array[sig] != 1) {
 				/* sig was not caught or caught too many times */
@@ -309,7 +305,7 @@ static int setup_sigs(void)
 	int sig;
 
 	/* set up signal handler routine */
-	for (sig = 1; sig < NUMSIGS; sig++) {
+	for (sig = 1; sig < NUMTSTSIGS; sig++) {
 		if (choose_sig(sig)) {
 			if (signal(sig, handler) == SIG_ERR) {
 				/* set up mesg to send back to parent */
@@ -399,9 +395,6 @@ int choose_sig(int sig)
 	case SIGTSTP:
 	case SIGCONT:
 	case SIGALRM:
-	case SIGCANCEL:
-	case SIGTIMER:
-	case SIGSYNCCALL:
 #ifdef SIGNOBDM
 	case SIGNOBDM:
 #endif
@@ -420,12 +413,6 @@ int choose_sig(int sig)
 		return 0;
 
 	}
-
-	// signals between SIGRTMIN and SIGRTMAX
-	// reserved for userspace.
-	// Hence, skip these signals.
-	if(sig >= SIGRTMIN && sig <= SIGRTMAX)
-		return 0;
 
 	return 1;
 
