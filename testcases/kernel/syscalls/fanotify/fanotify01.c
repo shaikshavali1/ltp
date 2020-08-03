@@ -359,7 +359,7 @@ pass:
 static void setup(void)
 {
 	int fd;
-
+	mkdir(MOUNT_PATH, 0777);
 	/* Check for kernel fanotify support */
 	fd = SAFE_FANOTIFY_INIT(FAN_CLASS_NOTIF, O_RDONLY);
 	SAFE_CLOSE(fd);
@@ -380,9 +380,9 @@ static struct tst_test test = {
 	.setup = setup,
 	.cleanup = cleanup,
 	.needs_tmpdir = 1,
-	.needs_root = 1,
-	.mount_device = 1,
-	.mntpoint = MOUNT_PATH,
+//	.needs_root = 1,
+//	.mount_device = 1,
+//	.mntpoint = MOUNT_PATH,
 };
 
 #else
