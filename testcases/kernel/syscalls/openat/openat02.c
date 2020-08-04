@@ -71,7 +71,11 @@ static void testfunc_trunc(void);
 
 static void (*testfunc[])(void) = {
 	testfunc_append,
-	testfunc_cloexec,
+// This sub test case create a child process and execlp the child.
+// In sgx-lkl currently fork is not supported. Hence, commenting
+// this testcase.
+// TODO:Enable this sub test case after fixing Github issue lsds/sgx-lkl#598
+//	testfunc_cloexec,
 	testfunc_largefile,
 	testfunc_noatime,
 	testfunc_nofollow,
