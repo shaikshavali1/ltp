@@ -61,7 +61,9 @@ static struct test_case_t {
 } test_cases[] = {
 	{&fd1, EPERM},
 	{&fd2, EBADF},
-	{&fd3, EROFS},
+// This test is commented because there is
+// no read-only file system mounted on sgx-lkl.
+//	{&fd3, EROFS},
 };
 
 TCID_DEFINE(fchown04);
@@ -103,16 +105,23 @@ static void setup(void)
 
 	tst_tmpdir();
 
+// This code is disabled because it explicitly
+// acquire a loop device to mount the fs.
+#if 0
 	fs_type = tst_dev_fs_type();
 	device = tst_acquire_device(cleanup);
 
 	if (!device)
 		tst_brkm(TCONF, cleanup, "Failed to acquire device");
+#endif
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	fd1 = SAFE_OPEN(cleanup, "tfile_1", O_RDWR | O_CREAT, 0666);
 
+// This code is disabled because it explicitly
+// create a filesystem using mkfs on the loop device and mount the fs.
+#if 0
 	tst_mkfs(cleanup, device, fs_type, NULL, NULL);
 	SAFE_MKDIR(cleanup, "mntpoint", DIR_MODE);
 	SAFE_MOUNT(cleanup, device, "mntpoint", fs_type, 0, NULL);
@@ -121,6 +130,7 @@ static void setup(void)
 	SAFE_MOUNT(cleanup, device, "mntpoint", fs_type,
 		   MS_REMOUNT | MS_RDONLY, NULL);
 	fd3 = SAFE_OPEN(cleanup, "mntpoint/tfile_3", O_RDONLY);
+#endif
 
 	ltpuser = SAFE_GETPWNAM(cleanup, "nobody");
 	SAFE_SETEUID(cleanup, ltpuser->pw_uid);
@@ -155,6 +165,10 @@ static void cleanup(void)
 	if (fd1 > 0 && close(fd1))
 		tst_resm(TWARN | TERRNO, "Failed to close fd1");
 
+// This code performs clean up of mounted filesystem and disabled sub test case.
+// This code is not needed because mounting filesystem and sub test case is
+// disabled. Hence, disabling this code.
+#if 0
 	if (fd3 > 0 && close(fd3))
 		tst_resm(TWARN | TERRNO, "Failed to close fd3");
 
@@ -163,6 +177,7 @@ static void cleanup(void)
 
 	if (device)
 		tst_release_device(device);
+#endif
 
 	tst_rmdir();
 }
