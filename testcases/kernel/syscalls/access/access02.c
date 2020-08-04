@@ -155,6 +155,9 @@ static void verify_access(unsigned int n)
 	access_test(tc, "root");
 
 	/* test as nobody */
+// SGX-LKL dosent support forking of child process.
+// Hence, commenting this below code.
+// TODO: This need to be enabled after fixing lsds/sgx-lkl#598 issue
 #if 0
 	pid = SAFE_FORK();
 	if (pid) {
@@ -164,6 +167,7 @@ static void verify_access(unsigned int n)
 		access_test(tc, "nobody");
 	}
 #endif
+	// The test verification with nobody user will continue in same process.
 	SAFE_SETUID(uid);
 	access_test(tc, "nobody");
 
