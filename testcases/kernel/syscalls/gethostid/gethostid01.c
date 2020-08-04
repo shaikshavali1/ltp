@@ -163,6 +163,11 @@ int main(int ac, char **av)
 		else {
 			tst_resm(TPASS, "gethostid is sucessfull & hostid = %d", TEST_RETURN);
 		}
+// This test code invokes system() syscall and executes a hostid command
+// and compare the results returned from gethostid().
+// in sgx-lkl system() syscall is not supported and test case hangs.
+// Hence, below code is commented so that basic test of gethostid can be done.
+// TODO: Enable this code after Github issue #598 is fixed
 #if 0
 		sprintf(hostid, "%08lx", TEST_RETURN);
 
@@ -244,6 +249,9 @@ int main(int ac, char **av)
 
 void setup(void)
 {
+// This code is to find the hostid executable path in environment
+// varibale. This is failing becuase it could not able to find.
+// the path in environment variable. Hence, it is commented.
 #if 0
 	char path[2048];
 
