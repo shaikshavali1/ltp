@@ -82,7 +82,7 @@ static void cleanup(void)
 	if (fd > 0)
 		SAFE_CLOSE(fd);
 
-       for (int i = 0; i < 13; i++){
+       for (int i = 0; i <= 13; i++){
                sprintf(fname, "mntpoint/file%d", i);
                remove(fname);
        }
