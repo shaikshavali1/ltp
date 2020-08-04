@@ -167,7 +167,7 @@ int main(int ac, char **av)
 // and compare the results returned from gethostid().
 // in sgx-lkl system() syscall is not supported and test case hangs.
 // Hence, below code is commented so that basic test of gethostid can be done.
-// TODO: Enable this code after Github issue #598 is fixed
+// TODO: Enable this code after Github issue lsds/sgx-lkl#598 is fixed
 #if 0
 		sprintf(hostid, "%08lx", TEST_RETURN);
 
