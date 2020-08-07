@@ -42,6 +42,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 #include "test.h"
 
@@ -57,15 +58,18 @@ int TST_TOTAL = 1;
 
 int kidpid[2];
 int parent_pid;
+int kill_t1 = 0;
+int kill_t2 = 0;
 
 int term(void);
 int al(void);
-void dochild1(void);
-void dochild2(void);
+void* dochild1(void* parm);
+void* dochild2(void* parm);
 
 int main(int argc, char *argv[])
 {
 	int pid;
+	pthread_t tid1, tid2;
 	sigset_t set;
 	struct sigaction act, oact;
 
@@ -89,21 +93,23 @@ int main(int argc, char *argv[])
 	parent_pid = getpid();
 	tst_tmpdir();
 
-	pid = FORK_OR_VFORK();
-	if (pid < 0)
-		tst_brkm(TBROK, NULL, "fork() returned %d", pid);
-	if (pid == 0)
-		dochild1();
+//	pid = FORK_OR_VFORK();
+//	if (pid < 0)
+//		tst_brkm(TBROK, NULL, "fork() returned %d", pid);
+//	if (pid == 0)
+//		dochild1();
+	pthread_create(&tid1, NULL, dochild1, NULL);
 
 	kidpid[0] = pid;
-	pid = FORK_OR_VFORK();
-	if (pid < 0) {
-		(void)kill(kidpid[0], SIGTERM);
-		(void)unlink("./rename14");
-		tst_brkm(TBROK, NULL, "fork() returned %d", pid);
-	}
-	if (pid == 0)
-		dochild2();
+//	pid = FORK_OR_VFORK();
+//	if (pid < 0) {
+//		(void)kill(kidpid[0], SIGTERM);
+//		(void)unlink("./rename14");
+//		tst_brkm(TBROK, NULL, "fork() returned %d", pid);
+//	}
+//	if (pid == 0)
+//		dochild2();
+	pthread_create(&tid2, NULL, dochild2, NULL);
 
 	kidpid[1] = pid;
 
@@ -111,8 +117,11 @@ int main(int argc, char *argv[])
 
 	/* Collect child processes. */
 	/* Wait for timeout */
-	pause();
-
+//	pause();
+	kill_t1 = 1;
+	kill_t2 = 1;
+	pthread_join(tid1, NULL);
+	pthread_join(tid2, NULL);
 	kill(kidpid[0], SIGTERM);
 	kill(kidpid[1], SIGTERM);
 
@@ -148,19 +157,21 @@ int al(void)
 	return 0;
 }
 
-void dochild1(void)
+void* dochild1(void* parm)
 {
 	int fd;
 
-	for (;;) {
+	for (;!kill_t1;) {
 		fd = creat("./rename14", 0666);
 		unlink("./rename14");
 		close(fd);
 	}
+	pthread_exit(NULL);
 }
 
-void dochild2(void)
+void* dochild2(void* parm)
 {
-	for (;;)
+	for (;!kill_t2;)
 		rename("./rename14", "./rename14xyz");
+	pthread_exit(NULL);
 }
