@@ -124,7 +124,9 @@ int main(int argc, char **argv)
 		TEST(writev(fd[0], wr_iovec, 2));
 		if (TEST_RETURN >= 0) {
 			if (TEST_RETURN == 2) {
-				tst_resm(TINFO,
+				// This is a passing scenario, Hence, changing
+				// message tag to TPASS from TINFO
+				tst_resm(TPASS,
 					 "writev returned %d as expected", 2);
 			} else {
 				tst_resm(TFAIL, "Expected nbytes = %d, got "
@@ -138,9 +140,13 @@ int main(int argc, char **argv)
 			fail = 1;
 		}
 		if (fail) {
-			tst_resm(TINFO, "block 1 FAILED");
+			// This is a passing scenario, Hence, changing
+			// message tag to TFAIL from TINFO
+			tst_resm(TFAIL, "block 1 FAILED");
 		} else {
-			tst_resm(TINFO, "block 1 PASSED");
+			// This is a passing scenario, Hence, changing
+			// message tag to TPASS from TINFO
+			tst_resm(TPASS, "block 1 PASSED");
 		}
 		tst_resm(TINFO, "Exit block 1");
 	}
@@ -173,25 +179,27 @@ void setup(void)
 
 	page_size = getpagesize();
 
+	// mmap is failing with EBADF error if fd= 0 when MAP_ANONYMOUS.
+	// passing -1 as a fd to mmap
 	/* Crate two readable and writeble mappings with non reabable
 	 * mapping around */
 	bad_addr[0] = mmap(NULL, page_size * 3, PROT_NONE,
-			   MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, 0, 0);
+			   MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, -1, 0);
 	if (bad_addr[0] == MAP_FAILED)
 		tst_brkm(TBROK, cleanup, "mmap failed for bad_addr[0]");
 
 	good_addr[0] = mmap(NULL, page_size, PROT_READ | PROT_WRITE,
-			    MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, 0, 0);
+			    MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, -1, 0);
 	if (good_addr[0] == MAP_FAILED)
 		tst_brkm(TBROK, cleanup, "mmap failed for good_addr[0]");
 
 	bad_addr[1] = mmap(NULL, page_size * 3, PROT_NONE,
-			   MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, 0, 0);
+			   MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, -1, 0);
 	if (bad_addr[1] == MAP_FAILED)
 		tst_brkm(TBROK, cleanup, "mmap failed for bad_addr[1]");
 
 	good_addr[1] = mmap(NULL, page_size, PROT_READ | PROT_WRITE,
-			    MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, 0, 0);
+			    MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, -1, 0);
 	if (good_addr[1] == MAP_FAILED)
 		tst_brkm(TBROK, cleanup, "mmap failed for good_addr[1]");
 
