@@ -32,6 +32,10 @@ static int has_mkfs(const char *fs_type)
 	char buf[128];
 	int ret;
 
+	tst_res(TINFO, "has_mkfs: system() syscall not supported, always return 1");
+
+// TODO: Enable below code after fixing Github issue https://github.com/lsds/sgx-lkl/issues/598
+#if 0
 	sprintf(buf, "mkfs.%s >/dev/null 2>&1", fs_type);
 
 	ret = tst_system(buf);
@@ -42,6 +46,7 @@ static int has_mkfs(const char *fs_type)
 	}
 
 	tst_res(TINFO, "mkfs.%s does exist", fs_type);
+#endif
 	return 1;
 }
 

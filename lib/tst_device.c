@@ -226,6 +226,7 @@ const char *tst_acquire_device__(unsigned int size)
 {
 	int fd;
 	char *dev;
+	char *dev_mnt;
 	struct stat st;
 	unsigned int acq_dev_size;
 	uint64_t ltp_dev_size;
@@ -274,6 +275,9 @@ const char *tst_acquire_device__(unsigned int size)
 
 		tst_resm(TINFO, "Skipping $LTP_DEV size %"PRIu64"MB, requested size %uMB",
 				ltp_dev_size, acq_dev_size);
+	}
+	else {
+		tst_resm(TWARN, "Block device path is not found in envirinment parameter LTP_DEV");
 	}
 
 	if (tst_fill_file(DEV_FILE, 0, 1024 * 1024, acq_dev_size)) {

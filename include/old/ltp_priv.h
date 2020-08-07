@@ -34,7 +34,7 @@
 /*
  * Default filesystem to be used for tests.
  */
-#define DEFAULT_FS_TYPE "ext2"
+#define DEFAULT_FS_TYPE "ext4"
 
 /* environment variables for controlling  tst_res verbosity */
 #define TOUT_VERBOSE_S  "VERBOSE"	/* All test cases reported */
