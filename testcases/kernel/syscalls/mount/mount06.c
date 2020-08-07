@@ -24,6 +24,7 @@
 
 #include <errno.h>
 #include <sys/mount.h>
+#include <linux/loop.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -50,12 +51,50 @@ static void cleanup(void);
 char *TCID = "mount06";
 int TST_TOTAL = 1;
 
-static const char *fs_type;
-static const char *device;
+static const char fs_type[256] = "ext4";
+static const char device[1024];
 static char path_name[PATH_MAX];
 static char mntpoint_src[PATH_MAX];
 static char mntpoint_des[PATH_MAX];
 static int mount_flag;
+int loopdev_flag = 0;
+
+void acquire_device(void)
+{
+        int ctlloopdev, loopdev, fsimgfile;
+        long devnum;
+
+	// Open loop controle device file	
+	ctlloopdev = open("/dev/loop-control", O_RDWR);
+        if (ctlloopdev == -1)
+        	tst_brkm(TBROK, cleanup, "failed to open /dev/loop-control");
+
+	// Find the free loop device
+	devnum = ioctl(ctlloopdev, LOOP_CTL_GET_FREE);
+        if (devnum == -1)
+        	tst_brkm(TBROK, cleanup, "failed to get free loop device");
+
+	sprintf(device, "/dev/loop%ld", devnum);
+	tst_resm(TINFO, "device = %s\n", device);
+
+	// Open loop device
+	loopdev = open(device, O_RDWR);
+        if (loopdev == -1)
+        	tst_brkm(TBROK, cleanup, "failed to open: loop device");
+
+	//open filesystem image
+	fsimgfile = open("/ltp_tst_mnt_fs/tstfs_ext4.img", O_RDWR);
+        if (fsimgfile == -1)
+        	tst_brkm(TBROK, cleanup, "failed to open: file system image file");
+
+	// Link loopdevice fd and image file fd
+	if (ioctl(loopdev, LOOP_SET_FD, fsimgfile) == -1)
+               tst_brkm(TBROK, cleanup, "failed to set loop fd");
+	
+	close(fsimgfile);
+    	close(loopdev);
+	loopdev_flag = 1;
+}
 
 int main(int argc, char *argv[])
 {
@@ -121,6 +160,9 @@ static void setup(void)
 
 	tst_tmpdir();
 
+	// This framework code causing oom killer issue
+	// Hence, removed this code.
+#if 0
 	fs_type = tst_dev_fs_type();
 	device = tst_acquire_device(cleanup);
 
@@ -128,6 +170,8 @@ static void setup(void)
 		tst_brkm(TCONF, cleanup, "Failed to obtain block device");
 
 	tst_mkfs(cleanup, device, fs_type, NULL, NULL);
+#endif
+	acquire_device();
 
 	if (getcwd(path_name, sizeof(path_name)) == NULL)
 		tst_brkm(TBROK, cleanup, "getcwd failed");
@@ -156,8 +200,19 @@ static void cleanup(void)
 	if (mount_flag && tst_umount(path_name) != 0)
 		tst_resm(TWARN | TERRNO, "umount(2) %s failed", path_name);
 
+	// Framework code causing oom killer issue
+	// Hence, removed this code.
+#if 0
 	if (device)
 		tst_release_device(device);
+#endif
+	if (loopdev_flag) {
+		int devfd = open(device, O_RDWR);
+		if (ioctl(devfd, LOOP_CLR_FD, 0) < 0) {
+    			tst_resm(TWARN | TERRNO, "Failed to clear fd");
+		}
+		close(devfd);
+	}
 
 	tst_rmdir();
 }
