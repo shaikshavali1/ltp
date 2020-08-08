@@ -98,7 +98,9 @@ static void setup(void)
 	if (!device)
 		tst_brkm(TCONF, cleanup, "Failed to obtain block device");
 
-	tst_mkfs(cleanup, device, fs_type, NULL, NULL);
+	// This function use system syscall which is not suported
+	// is sgx-lkl. Github issue https://github.com/lsds/sgx-lkl/issues/598 
+	//tst_mkfs(cleanup, device, fs_type, NULL, NULL);
 
 	ltpuser = SAFE_GETPWNAM(cleanup, nobody_uid);
 	SAFE_SETEUID(cleanup, ltpuser->pw_uid);
