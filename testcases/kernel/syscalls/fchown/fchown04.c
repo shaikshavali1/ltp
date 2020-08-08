@@ -28,6 +28,7 @@
  *   3) fchown(2) returns -1 and sets errno to EROFS if the named file resides
  *	on a read-only file system.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -40,8 +41,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <linux/loop.h>
-#include <sys/ioctl.h>
 
 #include "test.h"
 #include "safe_macros.h"
@@ -71,7 +70,6 @@ int TST_TOTAL = ARRAY_SIZE(test_cases);
 static void setup(void);
 static void fchown_verify(int);
 static void cleanup(void);
-char loopname[4096];
 
 int main(int ac, char **av)
 {
@@ -94,41 +92,6 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void acquire_device(void)
-{
-        int ctlloopdev, loopdev, fsimgfile;
-        long devnum;
-	
-	// Open loop controle device file	
-	ctlloopdev = open("/dev/loop-control", O_RDWR);
-        if (ctlloopdev == -1)
-        	tst_brkm(TBROK, cleanup, "failed to open /dev/loop-control");
-
-	// Find the free loop device
-	devnum = ioctl(ctlloopdev, LOOP_CTL_GET_FREE);
-        if (devnum == -1)
-        	tst_brkm(TBROK, cleanup, "failed to get free loop device");
-
-	sprintf(loopname, "/dev/loop%ld", devnum);
-	tst_resm(TINFO, "loopname = %s\n", loopname);
-
-	loopdev = open(loopname, O_RDWR);
-        if (loopdev == -1)
-        	tst_brkm(TBROK, cleanup, "failed to open: loop device");
-
-	fsimgfile = open("/ltp_tst_mnt_fs/tstfs_ext4.img", O_RDWR);
-        if (fsimgfile == -1)
-        	tst_brkm(TBROK, cleanup, "failed to open: file system image file");
-
-        if (ioctl(loopdev, LOOP_SET_FD, fsimgfile) == -1)
-               tst_brkm(TBROK, cleanup, "failed to set loop fd");
-	
-	close(fsimgfile);
-    	close(loopdev);
-	
-
-}
-
 static void setup(void)
 {
 	struct passwd *ltpuser;
@@ -140,10 +103,6 @@ static void setup(void)
 
 	tst_tmpdir();
 
-// This code is disabled because it explicitly
-// acquire a loop device to mount the fs.
-// create a filesystem using mkfs on the loop device and mount the fs.
-#if 0
 	fs_type = tst_dev_fs_type();
 	device = tst_acquire_device(cleanup);
 
@@ -153,30 +112,14 @@ static void setup(void)
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	fd1 = SAFE_OPEN(cleanup, "tfile_1", O_RDWR | O_CREAT, 0666);
-
-	tst_mkfs(cleanup, device, fs_type, NULL, NULL);
+	// This function use system syscall which is not suported
+	// is sgx-lkl. Github issue https://github.com/lsds/sgx-lkl/issues/598
+	//tst_mkfs(cleanup, device, fs_type, NULL, NULL);
 	SAFE_MKDIR(cleanup, "mntpoint", DIR_MODE);
 	SAFE_MOUNT(cleanup, device, "mntpoint", fs_type, 0, NULL);
 	mount_flag = 1;
 	SAFE_TOUCH(cleanup, "mntpoint/tfile_3", 0644, NULL);
 	SAFE_MOUNT(cleanup, device, "mntpoint", fs_type,
-		   MS_REMOUNT | MS_RDONLY, NULL);
-	fd3 = SAFE_OPEN(cleanup, "mntpoint/tfile_3", O_RDONLY);
-#endif
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	fd1 = SAFE_OPEN(cleanup, "tfile_1", O_RDWR | O_CREAT, 0666);
-
-	acquire_device();
-
-	// Create mount point and mount the loop device
-	SAFE_MKDIR(cleanup, "mntpoint", DIR_MODE);
-	SAFE_MOUNT(cleanup, loopname, "mntpoint", "ext4", 0, NULL);
-
-	// create a test file and remout the filesystem in Read only mode
-	mount_flag = 1;
-	SAFE_TOUCH(cleanup, "mntpoint/tfile_3", 0644, NULL);
-	SAFE_MOUNT(cleanup, loopname, "mntpoint", "ext4",
 		   MS_REMOUNT | MS_RDONLY, NULL);
 	fd3 = SAFE_OPEN(cleanup, "mntpoint/tfile_3", O_RDONLY);
 
@@ -213,10 +156,6 @@ static void cleanup(void)
 	if (fd1 > 0 && close(fd1))
 		tst_resm(TWARN | TERRNO, "Failed to close fd1");
 
-// This code performs clean up of mounted filesystem and disabled sub test case.
-// This code is not needed because mounting filesystem and sub test case is
-// disabled. Hence, disabling this code.
-#if 0
 	if (fd3 > 0 && close(fd3))
 		tst_resm(TWARN | TERRNO, "Failed to close fd3");
 
@@ -225,16 +164,6 @@ static void cleanup(void)
 
 	if (device)
 		tst_release_device(device);
-#endif
-        if (fd3 > 0 && close(fd3))
-                tst_resm(TWARN | TERRNO, "Failed to close fd3");
-	if (mount_flag) {
-		int devfd = open(loopname, O_RDWR);
-		if (ioctl(devfd, LOOP_CLR_FD, 0) < 0) {
-    			tst_resm(TWARN | TERRNO, "Failed to clear fd");
-		}
-		SAFE_UMOUNT(cleanup, "mntpoint");
-	}
 
 	tst_rmdir();
 }
