@@ -66,8 +66,7 @@ static void verify_sync_file_range(struct testcase *tc)
 
 	SAFE_CLOSE(fd);
 
-	if ((written >= tc->exp_sync_size) &&
-	    (written <= (tc->exp_sync_size + tc->exp_sync_size/10)))
+	if (written >= tc->exp_sync_size)
 		tst_res(TPASS, "%s", tc->desc);
 	else
 		tst_res(TFAIL, "%s: Synced %li, expected %li", tc->desc,
