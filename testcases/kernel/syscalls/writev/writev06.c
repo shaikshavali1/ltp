@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 			fail = 1;
 		}
 		if (fail) {
-			// This is a passing scenario, Hence, changing
+			// This is a failing scenario, Hence, changing
 			// message tag to TFAIL from TINFO
 			tst_resm(TFAIL, "block 1 FAILED");
 		} else {
