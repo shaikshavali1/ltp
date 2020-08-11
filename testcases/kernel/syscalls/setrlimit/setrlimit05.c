@@ -19,10 +19,25 @@
 
 static void *bad_addr;
 
+static void sigsegv_handler(int sig_no, siginfo_t* si, void* arg)
+{
+    ucontext_t* ctx = (ucontext_t*)arg;
+    /* In this example, the length of the offending instruction  is 3 bytes.
+     * So we skip the offender. */
+    ctx->uc_mcontext.gregs[REG_RIP] += 3;
+    tst_res(TINFO, "SIGSEGV is called");
+}
+
 static void verify_setrlimit(void)
 {
 	int status;
 	pid_t pid;
+	struct sigaction sa;
+
+       sa.sa_flags = SA_SIGINFO;
+       sigemptyset(&sa.sa_mask);
+       sa.sa_sigaction = sigsegv_handler;
+       sigaction(SIGSEGV, &sa, NULL);
 
 	pid = SAFE_FORK();
 	if (!pid) {

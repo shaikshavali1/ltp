@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -119,8 +120,12 @@ static void setup(void)
 
 static void readdir_verify(const struct test_case_t *test)
 {
-	TEST(ltp_syscall(__NR_readdir, *test->fd, test->dirp, test->count));
 
+	tst_resm(TINFO, "readdir() is called ");
+//	TEST(ltp_syscall(__NR_readdir, *test->fd, test->dirp, test->count));
+	TEST(readdir(*test->fd, test->dirp, test->count));
+//	TEST_RETURN = readdir(*test->fd, test->dirp, test->count);
+//	TEST_ERRNO = errno;
 	if (TEST_RETURN != -1) {
 		tst_resm(TFAIL, "readdir() succeeded unexpectedly");
 		return;
