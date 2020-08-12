@@ -791,11 +791,11 @@ static void do_setup(int argc, char *argv[])
 
 	if (tst_test->mount_device) {
 		tst_test->needs_device = 1;
-               // keep format device is disabled
-               // system() call is not supported. Hence, cannot format to filesystem
-               // . The block device is preformatted to ext4 at compilation
-               // and shared the details with enclave as an environment variable.
-	       // TODO: Enable below code after fixing Github issue https://github.com/lsds/sgx-lkl/issues/598
+		// keep format device is disabled
+		// system() call is not supported. Hence, cannot format to filesystem
+		// The block device is preformatted to ext4 at compilation
+		// and shared the details with enclave as an environment variable
+		// TODO: Enable below code after fixing Github issue https://github.com/lsds/sgx-lkl/issues/598
 		tst_test->format_device = 0;
 	}
 
@@ -845,11 +845,12 @@ static void do_setup(int argc, char *argv[])
 			tst_res(TINFO, "Can't mount tmpfs read-only, "
 			        "falling back to block device...");
 			tst_test->needs_device = 1;
-               // Disable formating of block device.
-               // system() call is not supported. Hence, cannot format to filesystem
-               // The block device is preformatted to ext4 at compilation
-               // and shared the details with enclave as an environment variable.
-	       // TODO: Enable below code after fixing Github issue https://github.com/lsds/sgx-lkl/issues/598
+			// Disable formating of block device.
+			// system() call is not supported. Hence, cannot format to filesystem
+			// The block device is preformatted to ext4 at compilation
+			// and shared the details with enclave as an environment variable
+			// TODO: Enable below code after fixing Github
+			// issue https://github.com/lsds/sgx-lkl/issues/598
 			tst_test->format_device = 0;
 		}
 	}
@@ -1163,8 +1164,8 @@ static int run_tcases_per_fs(void)
 		// skip test for all fs types except ext4.
 		// system() call is not supported. Hence, cannot format to filesystem
 		// other than ext4. The block device is preformatted at compilation
-		// and shared the details with enclave as an environment variable.
-	       // TODO: Enable below code after fixing Github issue https://github.com/lsds/sgx-lkl/issues/598
+		// and shared the details with enclave as an environment variable
+		// TODO: Enable below code after fixing Github issue https://github.com/lsds/sgx-lkl/issues/598
 		if (strcmp(filesystems[i], "ext4"))
 			continue;
 		tdev.fs_type = filesystems[i];
