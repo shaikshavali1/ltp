@@ -66,6 +66,12 @@ static void verify_sync_file_range(struct testcase *tc)
 
 	SAFE_CLOSE(fd);
 
+
+	// ext4 defers a lot of IO on a freshly made filesystem to the kernel -
+	// for example it will initialize the journal and inode tables after the
+	// mount, and this will cause extra IO.
+	// upper limit is removed based on the explanation in upstream commit
+	// 1643d850911c7d6dbf898e1e3dfeef974e84508b
 	if (written >= tc->exp_sync_size)
 		tst_res(TPASS, "%s", tc->desc);
 	else
